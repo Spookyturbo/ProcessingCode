@@ -5,7 +5,7 @@ float[] answers = {1};
 
 float[][] training = {{0, 0, 0}, {1, 1, 0}, {0, 1, 1}, {1, 0, 1}};
 
-XOR xor = new XOR(4, 10);
+XOR xor = new XOR(0, 10);
 
 void setup() {
   size(600, 600);
