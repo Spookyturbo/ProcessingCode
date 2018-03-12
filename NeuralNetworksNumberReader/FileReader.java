@@ -7,12 +7,16 @@ public class FileReader {
   File file;
   int index = 0;
 
-  byte[] fileInfo;
+  public int[] fileInfo;
 
   public FileReader(String fileName) {
 
-    file = new File("C:/Users/Turt/Documents/ProcessingGit/NeuralNetworksNumberReader/" + fileName);
-    fileInfo = readFile();
+    file = new File("C:/Users/Andy R/Documents/ProcessingGit/ProcessingCode/NeuralNetworksNumberReader/" + fileName);
+    byte[] fileInfoB = readFile();
+    fileInfo = new int[fileInfoB.length];
+    for(int i = 0; i < fileInfoB.length; i++) {
+      fileInfo[i] = (int)fileInfoB[i];
+    }
   }
 
   public byte[] readFile() {
@@ -48,7 +52,7 @@ public class FileReader {
     index = n;
   }
   
-  public byte getByte(int index) {
+  public int getByte(int index) {
    return fileInfo[index]; 
   }
 }

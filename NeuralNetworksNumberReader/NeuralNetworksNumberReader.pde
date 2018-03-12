@@ -2,7 +2,7 @@ NeuralNetwork nn;
 
 FileReader imageReader = new FileReader("train-images.idx3-ubyte");
 
-int numberOfImages = 10;
+int numberOfImages = 60000;
 
 int numberOfRows;
 int numberOfCols;
@@ -13,7 +13,7 @@ int squareHeight;
 float[][] images;
 float[][] labels;
 
-byte[] fileInfo = new byte[(28 * 28 * 60000) + 16]; 
+int[] fileInfo = new int[(28 * 28 * 60000) + 16]; 
 
 FileReader labelReader = new FileReader("train-labels.idx1-ubyte");
 
@@ -25,19 +25,54 @@ void setup() {
   images = new float[numberOfImages][numberOfRows * numberOfCols]; //create arrays for storing the inputs and outputs
   labels = new float[numberOfImages][10];
 
-  fileInfo = imageReader.readFile(); //Store the file in an array to prevent opening inputStreams often
+  fileInfo = imageReader.fileInfo; //Store the file in an array to prevent opening inputStreams often
 
-  fakeInitImageArray(); //Fill the arrays from the fileInfo
-  fakeInitLabelArray();
+  initImageArray(); //Fill the arrays from the fileInfo
+  initLabelArray();
 
   //Draw the first picture and initialize the neural network
-  drawPicture(images[5]);
-  println(labels[9]);
-  nn = new NeuralNetwork(numberOfRows * numberOfCols, 40, 10);
-  println("Ready for input");
+  nn = new NeuralNetwork(784, 64, 10);
 }
 
+int numberIndex = 0;
+int delay = 0;
+
+boolean show = true;
+
+int largestInLabel(int n) {
+
+  int largest = 0;
+  for (int i = 0; i < labels[n].length; i++) {
+    if (labels[n][i] > labels[n][largest]) {
+      largest = i;
+    }
+  }
+
+  return largest;
+}
+
+float totalCorrect = 0;
+float total = 0;
+float trainIndex = 0;
+
 void draw() {
+  nn.train(images[(int)trainIndex], labels[(int)trainIndex]);
+
+  float prediction = guessNumber((int)trainIndex);
+
+  if (prediction == largestInLabel((int)trainIndex)) {
+    totalCorrect++;
+  }
+  trainIndex++;
+
+  float percent = 100 * (totalCorrect / trainIndex);
+  println(percent);
+
+  if (trainIndex == images.length) {
+    trainIndex = 0;
+    totalCorrect = 0;
+    println("Done: " + percent);
+  }
 }
 int[] numbers = {1, 3, 5, 7, 2, 0, 13, 15, 17, 4};
 void fakeInitImageArray() {
@@ -51,7 +86,7 @@ void fakeInitImageArray() {
 float[] getImage(int n) {
   imageReader.setIndex(16 + ((n) * (numberOfRows * numberOfCols)));
   float[] picture = new float[numberOfRows * numberOfCols];
-  
+
   int i = 0;
   for (int row = 0; row < numberOfRows; row++) {
     for (int col = 0; col < numberOfCols; col++) {
@@ -75,15 +110,27 @@ void fakeInitLabelArray() {
 }
 
 void keyPressed() {
-  if (key != 's') {
-    drawPicture(numbers[Character.getNumericValue(key)]);
-    println(guessNumber(Character.getNumericValue(key)));
-  } else if (key == 's') {
-    train();
-  }
+  //if (key != 's') {
+  //  drawPicture(numbers[Character.getNumericValue(key)]);
+  //  println(guessNumber(numbers[Character.getNumericValue(key)]));
+  //} else if (key == 's') {
+  //  train();
+  //}
+  //if (key == 'a') {
+  //  drawPicture(2);
+  //  println(guessNumber(2));
+  //}
+
   if (key == 'a') {
-    drawPicture(2);
-    println(guessNumber(2));
+    delay = 1000;
+  } else if (key == 'd') {
+    delay = 0;
+  }
+
+  if (key == 'w') {
+    show = true;
+  } else if (key == 's') {
+    show = false;
   }
 }
 
@@ -94,7 +141,7 @@ void initImageArray() {
 
     for (int row = 0; row < numberOfRows; row++) {
       for (int col = 0; col < numberOfCols; col++) {
-        images[i][j] = ((fileInfo[index + j] & 0xFF) / 255);
+        images[i][j] = (fileInfo[index + j] & 0xFF) / 255f;
         j++;
       }
     }
@@ -149,7 +196,7 @@ void readImageHeader() {
   squareHeight = height / numberOfRows;
 }
 
-void drawPicture(int n) { //starts at index 0
+void drawPicture(int n, boolean correct) { //starts at index 0
   imageReader.setIndex(16 + ((n) * (numberOfRows * numberOfCols)));
 
   for (int row = 0; row < numberOfRows; row++) {
@@ -158,6 +205,11 @@ void drawPicture(int n) { //starts at index 0
       noStroke();
       rect(col * squareWidth, row * squareHeight, squareWidth, squareHeight);
     }
+  }
+
+  if (correct) {
+    fill(0, 255, 0);
+    rect(0, 0, 50, 50);
   }
 }
 

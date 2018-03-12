@@ -55,10 +55,12 @@ public class NeuralNetwork {
 
     //Applying the weights to the values
     Matrix hiddenValues = Matrix.multiply(inputWeights, inputValues, false); //Apply the weights to the values  false means not elementwise
+    hiddenValues = Matrix.add(hiddenValues, hiddenBias);
     hiddenValues.map(activationFunction); //apply the activation function to the output
 
     //Applying the weights to the values
     Matrix outputValues = Matrix.multiply(hiddenWeights, hiddenValues, false);
+    outputValues = Matrix.add(outputValues, outputBias);
     outputValues.map(activationFunction);
 
     float[] outputs = new float[outputValues.rows]; //Think about creating a Matrix.toArray()
@@ -77,10 +79,12 @@ public class NeuralNetwork {
 
     //Applying the weights to the values
     Matrix hiddenValues = Matrix.multiply(inputWeights, inputValues, false); //Apply the weights to the values  false means not elementwise
+    hiddenValues = Matrix.add(hiddenValues, hiddenBias);
     hiddenValues.map(activationFunction); //apply the activation function to the output
 
     //Applying the weights to the values
     Matrix outputValues = Matrix.multiply(hiddenWeights, hiddenValues, false);
+    outputValues = Matrix.add(outputValues, outputBias);
     outputValues.map(activationFunction);
 
     Matrix error = Matrix.subtract(correctOutputs, outputValues);
@@ -92,20 +96,21 @@ public class NeuralNetwork {
 
     Matrix gradientHidden = Matrix.multiply(error, outputValues, true); //This IS element wise
     //apply the gradient to get the deltaWeights
+    gradientHidden = Matrix.multiply(gradientHidden, learningRate);
     Matrix deltaHiddenWeights = Matrix.multiply(gradientHidden, Matrix.transpose(hiddenValues), false);
-    deltaHiddenWeights = Matrix.multiply(deltaHiddenWeights, learningRate);
 
     //Apply the change to the weights
     hiddenWeights = Matrix.add(hiddenWeights, deltaHiddenWeights);
+    outputBias = Matrix.add(outputBias, gradientHidden);
 
     hiddenValues.map(derivativeFunction);
 
     Matrix gradientInput = Matrix.multiply(hiddenError, hiddenValues, true);
-
+    gradientInput = Matrix.multiply(gradientInput, learningRate);
     Matrix deltaInputWeights = Matrix.multiply(gradientInput, Matrix.transpose(inputValues), false);
-    deltaInputWeights = Matrix.multiply(deltaInputWeights, learningRate);
 
     inputWeights = Matrix.add(inputWeights, deltaInputWeights);
+    hiddenBias = Matrix.add(hiddenBias, gradientInput);
   }
 
   public void train(float[][] inputs, float[][] answers) {
