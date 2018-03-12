@@ -10,8 +10,14 @@ public class NeuralNetwork {
 
   MapInput derivativeFunction = new MapInput() {
     public float change(float x) {
-     return (x * (1 - x)); 
+      return (x * (1 - x));
     }
+  };
+  
+  MapInput averageFunction = new MapInput() {
+     public float change(float x) {
+        return x / 2000; 
+     }
   };
 
   int numberOfInput;
@@ -76,29 +82,81 @@ public class NeuralNetwork {
     //Applying the weights to the values
     Matrix outputValues = Matrix.multiply(hiddenWeights, hiddenValues, false);
     outputValues.map(activationFunction);
-    
+
     Matrix error = Matrix.subtract(correctOutputs, outputValues);
     Matrix transposedHiddenWeights = Matrix.transpose(hiddenWeights);
     Matrix hiddenError = Matrix.multiply(transposedHiddenWeights, error, false);
 
     //calculate the gradient for the error
     outputValues.map(derivativeFunction);
-    
+
     Matrix gradientHidden = Matrix.multiply(error, outputValues, true); //This IS element wise
     //apply the gradient to get the deltaWeights
     Matrix deltaHiddenWeights = Matrix.multiply(gradientHidden, Matrix.transpose(hiddenValues), false);
     deltaHiddenWeights = Matrix.multiply(deltaHiddenWeights, learningRate);
-    
+
     //Apply the change to the weights
     hiddenWeights = Matrix.add(hiddenWeights, deltaHiddenWeights);
-    
+
     hiddenValues.map(derivativeFunction);
 
     Matrix gradientInput = Matrix.multiply(hiddenError, hiddenValues, true);
-    
+
     Matrix deltaInputWeights = Matrix.multiply(gradientInput, Matrix.transpose(inputValues), false);
     deltaInputWeights = Matrix.multiply(deltaInputWeights, learningRate);
-    
+
     inputWeights = Matrix.add(inputWeights, deltaInputWeights);
+  }
+
+  public void train(float[][] inputs, float[][] answers) {
+    Matrix totalError = new Matrix(answers[0].length, 1);
+    Matrix totalOutputValues = new Matrix(numberOfOutput, 1);
+    Matrix totalHiddenValues = new Matrix(numberOfHidden, 1);
+    Matrix totalInputValues = new Matrix(numberOfInput, 1);
+    
+    for (int i = 0; i < inputs.length; i++) {
+      Matrix inputValues = Matrix.vectorFromArray(inputs[i]);
+      totalInputValues = Matrix.add(totalInputValues, inputValues);
+      Matrix correctOutputs = Matrix.vectorFromArray(answers[i]);
+
+      //Applying the weights to the values
+      Matrix hiddenValues = Matrix.multiply(inputWeights, inputValues, false); //Apply the weights to the values  false means not elementwise
+      hiddenValues.map(activationFunction); //apply the activation function to the output
+      totalHiddenValues = Matrix.add(totalHiddenValues, hiddenValues);
+      //Applying the weights to the values
+      Matrix outputValues = Matrix.multiply(hiddenWeights, hiddenValues, false);
+      outputValues.map(activationFunction);
+      totalOutputValues = Matrix.add(totalOutputValues, outputValues);
+
+      Matrix error = Matrix.subtract(correctOutputs, outputValues);
+      totalError = Matrix.add(totalError, error);
     }
+
+    totalOutputValues.map(averageFunction);
+    totalHiddenValues.map(averageFunction);
+    totalInputValues.map(averageFunction);
+
+    Matrix transposedHiddenWeights = Matrix.transpose(hiddenWeights);
+    Matrix hiddenError = Matrix.multiply(transposedHiddenWeights, totalError, false);
+
+    //calculate the gradient for the error
+    totalOutputValues.map(derivativeFunction);
+
+    Matrix gradientHidden = Matrix.multiply(totalError, totalOutputValues, true); //This IS element wise
+    //apply the gradient to get the deltaWeights
+    Matrix deltaHiddenWeights = Matrix.multiply(gradientHidden, Matrix.transpose(totalHiddenValues), false);
+    deltaHiddenWeights = Matrix.multiply(deltaHiddenWeights, learningRate);
+
+    //Apply the change to the weights
+    hiddenWeights = Matrix.add(hiddenWeights, deltaHiddenWeights);
+
+    totalHiddenValues.map(derivativeFunction);
+
+    Matrix gradientInput = Matrix.multiply(hiddenError, totalHiddenValues, true);
+
+    Matrix deltaInputWeights = Matrix.multiply(gradientInput, Matrix.transpose(totalInputValues), false);
+    deltaInputWeights = Matrix.multiply(deltaInputWeights, learningRate);
+
+    inputWeights = Matrix.add(inputWeights, deltaInputWeights);
+  }
 }
