@@ -56,22 +56,31 @@ float total = 0;
 float trainIndex = 0;
 
 void draw() {
-  nn.train(images[(int)trainIndex], labels[(int)trainIndex]);
+  if (!testMode) {
+    nn.train(images[(int)trainIndex], labels[(int)trainIndex]);
 
-  float prediction = guessNumber((int)trainIndex);
+    float prediction = guessNumber((int)trainIndex);
 
-  if (prediction == largestInLabel((int)trainIndex)) {
-    totalCorrect++;
-  }
-  trainIndex++;
+    if (prediction == largestInLabel((int)trainIndex)) {
+      totalCorrect++;
+    }
 
-  float percent = 100 * (totalCorrect / trainIndex);
-  println(percent);
+    drawPicture(images[(int)trainIndex], prediction == largestInLabel((int)trainIndex));
+    trainIndex++;
 
-  if (trainIndex == images.length) {
-    trainIndex = 0;
-    totalCorrect = 0;
-    println("Done: " + percent);
+    float percent = 100 * (totalCorrect / trainIndex);
+    println(percent);
+
+    if (trainIndex == images.length) {
+      trainIndex = 0;
+      totalCorrect = 0;
+      println("Done: " + percent);
+    }
+  } else {
+    int prediction = guessNumber(currentImage);
+    drawPicture(currentImage, prediction == largestInLabel(currentImage));
+
+    println(prediction);
   }
 }
 int[] numbers = {1, 3, 5, 7, 2, 0, 13, 15, 17, 4};
@@ -109,6 +118,11 @@ void fakeInitLabelArray() {
   }
 }
 
+String number = "";
+
+boolean testMode = false;
+int currentImage = 0;
+
 void keyPressed() {
   //if (key != 's') {
   //  drawPicture(numbers[Character.getNumericValue(key)]);
@@ -121,16 +135,24 @@ void keyPressed() {
   //  println(guessNumber(2));
   //}
 
-  if (key == 'a') {
-    delay = 1000;
-  } else if (key == 'd') {
-    delay = 0;
-  }
-
-  if (key == 'w') {
-    show = true;
-  } else if (key == 's') {
-    show = false;
+  if (testMode) {
+    if (key == 'a') {
+      testMode = false;
+    } else if (key == 's') {
+      if (number.length() < 6 && number.length() > 0) {
+        int tmp = Integer.parseInt(number);
+        if (tmp < numberOfImages && tmp >= 0) {
+          currentImage = tmp;
+        }
+      }
+      number = "";
+    } else if (key == '1' || key == '2' || key == '3' || key == '4' || key == '5' || key == '6' || key == '7' || key == '8' || key == '9' || key == '0') {
+      number += key;
+    }
+  } else {
+    if (key == 'a') {
+      testMode = true;
+    }
   }
 }
 
@@ -213,7 +235,7 @@ void drawPicture(int n, boolean correct) { //starts at index 0
   }
 }
 
-void drawPicture(float[] pixelValues) {
+void drawPicture(float[] pixelValues, boolean correct) {
   int j = 0;
   for (int row = 0; row < numberOfRows; row++) {
     for (int col = 0; col < numberOfCols; col++) {
@@ -222,6 +244,10 @@ void drawPicture(float[] pixelValues) {
       rect(col * squareWidth, row * squareHeight, squareWidth, squareHeight);
       j++;
     }
+  }
+  if (correct) {
+    fill(0, 255, 0);
+    rect(0, 0, 50, 50);
   }
 }
 
