@@ -3,7 +3,7 @@ Snake snake;
 NeuralNetwork nn = new NeuralNetwork(5, 50, 1); //inputs: object to the left, object ahead, object to the right, suggested direction
 
 void setup() {
-  size(400, 400);
+  size(100, 100);
   snake = new Snake(10);
   background(51);
   snake.beginGame();
@@ -43,6 +43,8 @@ void draw() {
 float angleToApple() {
   PVector snakePosition = snake.currentPosition.copy();
   PVector apple = snake.apple.copy();
+  apple.x += 0.00000000000001;
+  apple.y += 0.00000000000001;
   PVector appleToSnakeVector = new PVector(snakePosition.x - apple.x, snakePosition.y - apple.y);
   PVector direction = snake.direction.copy();
   float dot = appleToSnakeVector.dot(direction);
@@ -50,19 +52,23 @@ float angleToApple() {
 
   if (direction.x == 0 && direction.y == 1) { //up
     if (snakePosition.x < apple.x) {
-      angle -= 180;
+      //angle -= 180;
+      angle *= -1;
     }
   } else if (direction.x == 1 && direction.y == 0) { //right
     if (snakePosition.y > apple.y) {
-      angle -= 180;
+      //angle -= 180;
+      angle *= -1;
     }
   } else if (direction.x == -1 && direction.y == 0) { //left
     if (snakePosition.y < apple.y) {
-      angle -= 180;
+      //angle -= 180;
+      angle *= -1;
     }
   } else if (direction.x == 0 && direction.y == -1) { //down
     if (snakePosition.x > apple.x) {
-      angle -= 180;
+      //angle -= 180;
+      angle *= -1;
     }
   }
 
@@ -80,6 +86,7 @@ void training() {
     inputs[2] = objects[2];
     inputs[3] = angleToApple();
     inputs[4] = i;
+   
     //inputs[3] = i;
     float distanceToApple = snake.distanceToApple(snake.currentPosition);
     float newDistanceToApple = 0;
@@ -98,11 +105,17 @@ void training() {
     } else {
       answers[0] = 1;
     }
+    println("Training");
+    println(angleToApple());
+    println(snake.apple);
     nn.train(inputs, answers);
-    println(answers);
+    println("Done training");
+    //println(snake.surrounding());
     //nn.train(inputs, new float[] {(inputs[i + 1] == 1) ? 0 : 1});
-
+    println("Testing");
     options[i + 1] = nn.feedForward(inputs)[0];
+    println("Done Testing");
+    
   }
   int largest = 0;
   for (int i = 0; i < options.length; i++) {
@@ -110,7 +123,7 @@ void training() {
       largest = i;
     }
   }
-
+  
   if (largest == 0) {
     snake.turnLeft();
   } else if (largest == 1) {

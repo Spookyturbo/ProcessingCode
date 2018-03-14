@@ -4,7 +4,8 @@ public class NeuralNetwork {
 
   MapInput activationFunction = new MapInput() {
     public float change(float x) {
-      return (float)(1/( 1 + Math.pow(Math.E, (-1*x))));
+      float n = (float)(1/( 1 + Math.pow(Math.E, (-1*x))));
+      return n;
     }
   };
 
@@ -13,11 +14,11 @@ public class NeuralNetwork {
       return (x * (1 - x));
     }
   };
-  
+
   MapInput averageFunction = new MapInput() {
-     public float change(float x) {
-        return x / 2000; 
-     }
+    public float change(float x) {
+      return x / 2000;
+    }
   };
 
   int numberOfInput;
@@ -26,11 +27,11 @@ public class NeuralNetwork {
 
   float learningRate = 0.1f;
 
-  Matrix inputWeights; //weights from input to hidden
-  Matrix hiddenWeights; //weights from hidden to output
+  public Matrix inputWeights; //weights from input to hidden
+  public Matrix hiddenWeights; //weights from hidden to output
 
-  Matrix hiddenBias; //Bias on the hidden (From the input to the hidden)
-  Matrix outputBias; //Bias on the output (From the hidden to the output)
+  public Matrix hiddenBias; //Bias on the hidden (From the input to the hidden)
+  public Matrix outputBias; //Bias on the output (From the hidden to the output)
 
   public NeuralNetwork(int nI, int nH, int nO) {
     numberOfInput = nI;
@@ -76,15 +77,17 @@ public class NeuralNetwork {
 
     Matrix inputValues = Matrix.vectorFromArray(inputs);
     Matrix correctOutputs = Matrix.vectorFromArray(answers);
-
     //Applying the weights to the values
     Matrix hiddenValues = Matrix.multiply(inputWeights, inputValues, false); //Apply the weights to the values  false means not elementwise
+    inputValues.print();
     hiddenValues = Matrix.add(hiddenValues, hiddenBias);
+    
     hiddenValues.map(activationFunction); //apply the activation function to the output
 
     //Applying the weights to the values
     Matrix outputValues = Matrix.multiply(hiddenWeights, hiddenValues, false);
     outputValues = Matrix.add(outputValues, outputBias);
+    
     outputValues.map(activationFunction);
 
     Matrix error = Matrix.subtract(correctOutputs, outputValues);
@@ -92,6 +95,7 @@ public class NeuralNetwork {
     Matrix hiddenError = Matrix.multiply(transposedHiddenWeights, error, false);
 
     //calculate the gradient for the error
+    PApplet.println("MappingOutputDerivative");
     outputValues.map(derivativeFunction);
 
     Matrix gradientHidden = Matrix.multiply(error, outputValues, true); //This IS element wise
@@ -102,7 +106,7 @@ public class NeuralNetwork {
     //Apply the change to the weights
     hiddenWeights = Matrix.add(hiddenWeights, deltaHiddenWeights);
     outputBias = Matrix.add(outputBias, gradientHidden);
-
+    PApplet.println("MappingHiddenDerivative");
     hiddenValues.map(derivativeFunction);
 
     Matrix gradientInput = Matrix.multiply(hiddenError, hiddenValues, true);
@@ -118,7 +122,7 @@ public class NeuralNetwork {
     Matrix totalOutputValues = new Matrix(numberOfOutput, 1);
     Matrix totalHiddenValues = new Matrix(numberOfHidden, 1);
     Matrix totalInputValues = new Matrix(numberOfInput, 1);
-    
+
     for (int i = 0; i < inputs.length; i++) {
       Matrix inputValues = Matrix.vectorFromArray(inputs[i]);
       totalInputValues = Matrix.add(totalInputValues, inputValues);
