@@ -1,17 +1,20 @@
 Snake snake;
 
-NeuralNetwork nn = new NeuralNetwork(5, 50, 1); //inputs: object to the left, object ahead, object to the right, suggested direction
+NeuralNetwork nn = new NeuralNetwork(5, 2000, 1); //inputs: object to the left, object ahead, object to the right, suggested direction
 
 void setup() {
-  size(100, 100);
+  size(400, 400);
   snake = new Snake(10);
   background(51);
   snake.beginGame();
+  //trainOnWalls();
+  println("Done training");
 }
 
 int delayValue = 0;
 
 void draw() {
+  println(snake.score);
   training();
   delay(delayValue);
   //println(angleToApple());
@@ -41,10 +44,10 @@ void draw() {
 //}
 
 float angleToApple() {
-  PVector snakePosition = snake.currentPosition.copy();
+  PVector snakePosition = snakePosition = snake.currentPosition.copy();
   PVector apple = snake.apple.copy();
-  apple.x += 0.00000000000001;
-  apple.y += 0.00000000000001;
+
+
   PVector appleToSnakeVector = new PVector(snakePosition.x - apple.x, snakePosition.y - apple.y);
   PVector direction = snake.direction.copy();
   float dot = appleToSnakeVector.dot(direction);
@@ -75,6 +78,95 @@ float angleToApple() {
   return  angle / 180;
 }
 
+void trainOnWalls() {
+  for (int j = 0; j < 100000; j++) {
+    for (int i = -1; i < 2; i++) {
+      float[] inputs = new float[5];
+      inputs[0] = floor(random(2));
+      inputs[1] = floor(random(2));
+      inputs[2] = floor(random(2));
+      PVector snakePosition = new PVector(floor(random(snake.dimensions.x)), floor(random(snake.dimensions.y)));
+      PVector apple;
+      do {
+      apple = new PVector(floor(random(snake.dimensions.x)), floor(random(snake.dimensions.y)));
+      } while(apple.x == snakePosition.x && apple.y == snakePosition.y);
+      PVector direction;
+      int value = floor(random(4));
+      if (value == 0) {
+        direction = new PVector(0, 1);
+      } else if (value == 1) {
+        direction = new PVector(1, 0);
+      } else if (value == 2) {
+        direction = new PVector(-1, 0);
+      } else {
+        direction = new PVector(0, -1);
+      }
+      inputs[3] = getAngle(apple, snakePosition, direction);
+      inputs[4] = i;
+
+      float distanceToApple = getDistance(apple, snakePosition);
+      float newDistanceToApple = 0;
+      if (i == -1) {
+        newDistanceToApple = getDistance(apple, snake.simulateLeft(snakePosition, direction));
+      } else if (i == 0) {
+        newDistanceToApple = getDistance(apple, snake.simulateForward(snakePosition, direction));
+      } else if (i == 1) {
+        newDistanceToApple = getDistance(apple, snake.simulateRight(snakePosition, direction));
+      }
+      float[] answers = new float[1];
+      if (inputs[i + 1] == 1) {
+        answers[0] = -1;
+      } else if (newDistanceToApple > distanceToApple) {
+        answers[0] = 0;
+      } else {
+        answers[0] = 1;
+      }
+      nn.train(inputs, answers);
+    }
+  }
+}
+
+float getDistance(PVector one, PVector two) {
+  float a = one.x - two.x;
+  float b = one.y - two.y;
+  a *= a;
+  b *= b;
+
+  return (float)Math.sqrt(a + b);
+}
+
+float getAngle(PVector one, PVector two, PVector direction) { //two == snake one == apple
+
+  PVector appleToSnakeVector = new PVector(two.x - one.x, two.y - one.y);
+
+  float dot = appleToSnakeVector.dot(direction);
+  float angle = (float)Math.toDegrees(Math.acos(dot / appleToSnakeVector.mag()));
+
+  if (direction.x == 0 && direction.y == 1) { //up
+    if (two.x < one.x) {
+      //angle -= 180;
+      angle *= -1;
+    }
+  } else if (direction.x == 1 && direction.y == 0) { //right
+    if (two.y > one.y) {
+      //angle -= 180;
+      angle *= -1;
+    }
+  } else if (direction.x == -1 && direction.y == 0) { //left
+    if (two.y < one.y) {
+      //angle -= 180;
+      angle *= -1;
+    }
+  } else if (direction.x == 0 && direction.y == -1) { //down
+    if (two.x > one.x) {
+      //angle -= 180;
+      angle *= -1;
+    }
+  }
+
+  return  angle / 180;
+}
+
 void training() {
   float[] options = new float[3];
   for (int i = -1; i < 2; i++) {
@@ -86,7 +178,7 @@ void training() {
     inputs[2] = objects[2];
     inputs[3] = angleToApple();
     inputs[4] = i;
-   
+
     //inputs[3] = i;
     float distanceToApple = snake.distanceToApple(snake.currentPosition);
     float newDistanceToApple = 0;
@@ -105,17 +197,9 @@ void training() {
     } else {
       answers[0] = 1;
     }
-    println("Training");
-    println(angleToApple());
-    println(snake.apple);
     nn.train(inputs, answers);
-    println("Done training");
-    //println(snake.surrounding());
     //nn.train(inputs, new float[] {(inputs[i + 1] == 1) ? 0 : 1});
-    println("Testing");
     options[i + 1] = nn.feedForward(inputs)[0];
-    println("Done Testing");
-    
   }
   int largest = 0;
   for (int i = 0; i < options.length; i++) {
@@ -123,7 +207,7 @@ void training() {
       largest = i;
     }
   }
-  
+
   if (largest == 0) {
     snake.turnLeft();
   } else if (largest == 1) {
@@ -159,8 +243,8 @@ void playing() {
 
 void keyPressed() {
   if (key == 'a') {
-    if(delayValue >= 10) {
-     delayValue -= 10; 
+    if (delayValue >= 10) {
+      delayValue -= 10;
     }
   } else if (key == 'd') {
     delayValue += 10;

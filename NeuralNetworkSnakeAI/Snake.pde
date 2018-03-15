@@ -5,7 +5,7 @@ class Snake {
 
   int snakeSize;
   int snakeLength = 3;
-
+  int score = -1;
   PVector direction = new PVector(1, 0);
   PVector currentPosition;
   PVector dimensions;
@@ -32,10 +32,23 @@ class Snake {
   }
 
   public void generateApple() {
-    apple = new PVector(floor(random(dimensions.x)), floor(random(dimensions.y))); 
+    score++;
+    do {
+      apple = new PVector(floor(random(dimensions.x)), floor(random(dimensions.y)));
+    } while (snakeContains(apple));
+
     noStroke();
     fill(255, 0, 0);
     rect(apple.x * snakeSize, map(apple.y, 0, dimensions.y - 1, dimensions.y - 1, 0) * snakeSize, snakeSize, snakeSize);
+  }
+
+  public boolean snakeContains(PVector point) {
+   for(int i = 0; i < snake.size(); i++) {
+    if(snake.get(i).x == point.x && snake.get(i).y == point.y) {
+     return true; 
+    }
+   }
+   return false;
   }
 
   public boolean updateSnake() {
@@ -51,6 +64,7 @@ class Snake {
   }
 
   private void reset() {
+    score = -1;
     background(51);
     snakeLength = 3;
     snake.clear();
@@ -165,6 +179,30 @@ class Snake {
   }
 
   public PVector simulateForward() {
+    return currentPosition.copy().add(direction);
+  }
+
+  public PVector simulateLeft(PVector currentPosition, PVector direction) {
+    float[] tmp = {direction.x, direction.y};
+    Matrix dir = Matrix.multiply(left, Matrix.vectorFromArray(tmp), false);
+    PVector _direction = new PVector();
+    _direction.x = dir.data[0][0];
+    _direction.y = dir.data[1][0];
+
+    return currentPosition.copy().add(_direction);
+  }
+
+  public PVector simulateRight(PVector currentPosition, PVector direction) {
+    float[] tmp = {direction.x, direction.y};
+    Matrix dir = Matrix.multiply(right, Matrix.vectorFromArray(tmp), false);
+    PVector _direction = new PVector();
+    _direction.x = dir.data[0][0];
+    _direction.y = dir.data[1][0];
+
+    return currentPosition.copy().add(_direction);
+  }
+
+  public PVector simulateForward(PVector currentPosition, PVector direction) {
     return currentPosition.copy().add(direction);
   }
 }

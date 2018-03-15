@@ -79,7 +79,7 @@ public class NeuralNetwork {
     Matrix correctOutputs = Matrix.vectorFromArray(answers);
     //Applying the weights to the values
     Matrix hiddenValues = Matrix.multiply(inputWeights, inputValues, false); //Apply the weights to the values  false means not elementwise
-    inputValues.print();
+
     hiddenValues = Matrix.add(hiddenValues, hiddenBias);
     
     hiddenValues.map(activationFunction); //apply the activation function to the output
@@ -95,7 +95,7 @@ public class NeuralNetwork {
     Matrix hiddenError = Matrix.multiply(transposedHiddenWeights, error, false);
 
     //calculate the gradient for the error
-    PApplet.println("MappingOutputDerivative");
+
     outputValues.map(derivativeFunction);
 
     Matrix gradientHidden = Matrix.multiply(error, outputValues, true); //This IS element wise
@@ -106,7 +106,7 @@ public class NeuralNetwork {
     //Apply the change to the weights
     hiddenWeights = Matrix.add(hiddenWeights, deltaHiddenWeights);
     outputBias = Matrix.add(outputBias, gradientHidden);
-    PApplet.println("MappingHiddenDerivative");
+
     hiddenValues.map(derivativeFunction);
 
     Matrix gradientInput = Matrix.multiply(hiddenError, hiddenValues, true);

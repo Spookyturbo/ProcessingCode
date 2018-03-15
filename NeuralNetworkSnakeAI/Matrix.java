@@ -177,12 +177,6 @@ public class Matrix {
   public void map(MapInput change) {
     for (int i = 0; i < rows; i++) {
       for (int j = 0; j < cols; j++) {  
-        if (Float.isNaN(data[i][j])) {
-          print();
-          PApplet.println(i + " " + j);
-          while (true) {
-          }
-        }
         data[i][j] = change.change(data[i][j]);
       }
     }
